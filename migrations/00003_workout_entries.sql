@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS workout_entries (
     workout_id BIGINT NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
     exercise_name VARCHAR(255) NOT NULL,
     sets INTEGER NOT NULL,
-    reps INTEGER NOT NULL,
+    reps INTEGER,
     duration_seconds INTEGER,
     weight DECIMAL(5,2),
     notes TEXT,

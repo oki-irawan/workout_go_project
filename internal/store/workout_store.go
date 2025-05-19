@@ -55,7 +55,7 @@ func (pg *PostgresWorkoutStore) CreateWorkout(workout *Workout) (*Workout, error
 		RETURNING id
 	`
 
-	err = tx.QueryRow(query, workout.Title, workout.Description, workout.DurationMinutes, workout.CaloriesBurned).Scan(workout.ID)
+	err = tx.QueryRow(query, workout.Title, workout.Description, workout.DurationMinutes, workout.CaloriesBurned).Scan(&workout.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (pg *PostgresWorkoutStore) CreateWorkout(workout *Workout) (*Workout, error
 			RETURNING id
 		`
 
-		err = tx.QueryRow(query, entry.ID, entry.ExerciseName, entry.Sets, entry.Reps, entry.DurationSeconds, entry.Weight, entry.OrderIndex).Scan(workout.ID)
+		err = tx.QueryRow(query, workout.ID, entry.ExerciseName, entry.Sets, entry.Reps, entry.DurationSeconds, entry.Weight, entry.OrderIndex).Scan(&entry.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -113,13 +113,14 @@ func (pg *PostgresWorkoutStore) GetWorkoutByID(id int64) (*Workout, error) {
 	for rows.Next() {
 		var entry WorkoutEntries
 		err = rows.Scan(
-			entry.ID,
-			entry.Reps,
-			entry.Sets,
-			entry.DurationSeconds,
-			entry.Weight,
-			entry.Notes,
-			entry.OrderIndex,
+			&entry.ID,
+			&entry.ExerciseName,
+			&entry.Reps,
+			&entry.Sets,
+			&entry.DurationSeconds,
+			&entry.Weight,
+			&entry.Notes,
+			&entry.OrderIndex,
 		)
 
 		if err != nil {
