@@ -46,6 +46,12 @@ type User struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+type UserStore interface {
+	CreateUser(user *User) error
+	GetUserByUsername(username string) (*User, error)
+	UpdateUser(user *User) error
+}
+
 type PostgresUserStore struct {
 	db *sql.DB
 }
@@ -54,12 +60,6 @@ func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
 	return &PostgresUserStore{
 		db: db,
 	}
-}
-
-type UserStore interface {
-	CreateUser(user *User) error
-	GetUserByUsername(username string) (*User, error)
-	UpdateUser(user *User) error
 }
 
 func (s *PostgresUserStore) CreateUser(user *User) error {
