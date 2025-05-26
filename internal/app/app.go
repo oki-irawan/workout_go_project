@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/oki-irawan/fem_project/internal/api"
+	"github.com/oki-irawan/fem_project/internal/middleware"
 	"github.com/oki-irawan/fem_project/internal/store"
 	"github.com/oki-irawan/fem_project/migrations"
 	"log"
@@ -16,6 +17,7 @@ type Application struct {
 	WorkoutHandler *api.WorkoutHandler
 	UserHandler    *api.UserHandler
 	TokenHandler   *api.TokenHandler
+	Middleware     middleware.UserMiddleware
 	DB             *sql.DB
 }
 
@@ -42,11 +44,14 @@ func NewApplication() (*Application, error) {
 	userHandler := api.NewUserHandler(userStore, logger)
 	tokenHandler := api.NewTokenHandler(tokenStore, userStore, logger)
 
+	middlewareHandler := middleware.UserMiddleware{UserStore: userStore}
+
 	app := &Application{
 		Logger:         logger,
 		WorkoutHandler: workoutHandler,
 		UserHandler:    userHandler,
 		TokenHandler:   tokenHandler,
+		Middleware:     middlewareHandler,
 		DB:             pgDB,
 	}
 

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
@@ -46,10 +47,17 @@ type User struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+var AnonymousUser = &User{}
+
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
+}
+
 type UserStore interface {
 	CreateUser(user *User) error
 	GetUserByUsername(username string) (*User, error)
 	UpdateUser(user *User) error
+	GetUserToken(scope, plainTextPassword string) (*User, error)
 }
 
 type PostgresUserStore struct {
@@ -60,6 +68,40 @@ func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
 	return &PostgresUserStore{
 		db: db,
 	}
+}
+
+func (s *PostgresUserStore) GetUserToken(scope, plainTextPassword string) (*User, error) {
+	tokenHash := sha256.Sum256([]byte(plainTextPassword))
+
+	query := `
+		SELECT u.id, u.username, u.email, u.bio, u.created_at, u.updated_at
+		FROM users u 
+		INNER JOIN tokens t ON t.user_id = u.id
+		WHERE t.hash = $1 AND t.scope = $2 AND t.expiry > $3
+	`
+
+	user := &User{
+		PasswordHash: password{},
+	}
+
+	err := s.db.QueryRow(query, tokenHash, scope, time.Now()).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Bio,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *PostgresUserStore) CreateUser(user *User) error {
